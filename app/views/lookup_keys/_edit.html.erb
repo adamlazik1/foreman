@@ -1,4 +1,5 @@
 <%= form_for(lookup_key) do |f| %>
+    <%= hidden_field_tag "#{lookup_key.model_name.param_key}[lookup_values_json]", nil, :class => 'lookup-values-json' %>
     <%= render 'lookup_keys/fields', :f => f %>
     <%= submit_or_cancel f %>
 <% end %>

@@ -14,6 +14,7 @@ module Foreman::Controller::Parameters::LookupKey
         :merge_overrides,
         :override,
         :override_value_order,
+        :lookup_values_json,
         :parameter_type,
         :path,
         :puppetclass_id,

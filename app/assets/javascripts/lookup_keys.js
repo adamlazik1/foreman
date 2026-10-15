@@ -16,10 +16,32 @@ $(document).on('ContentLoad', function() {
   fill_in_matchers();
   $('.matchers')
     .parents('form')
-    .on('submit', function() {
+    .off('submit.lookupValuesJson')
+    .on('submit.lookupValuesJson', function() {
       build_match();
+      serialize_lookup_values($(this));
     });
 });
+
+function serialize_lookup_values(form) {
+  var lookup_values = {};
+  var lookup_value_fields = form.find(
+    "[name*='[lookup_values_attributes]']"
+  ).not('.lookup_values_fields_template :input');
+
+  lookup_value_fields.serializeArray().forEach(function(field) {
+    var matches = field.name.match(
+      /\[lookup_values_attributes\]\[([^\]]+)\]\[([^\]]+)\]$/
+    );
+    if (matches) {
+      lookup_values[matches[1]] = lookup_values[matches[1]] || {};
+      lookup_values[matches[1]][matches[2]] = field.value;
+    }
+  });
+
+  form.find('.lookup-values-json').val(JSON.stringify(lookup_values));
+  lookup_value_fields.prop('disabled', true);
+}
 
 function select_first_tab() {
   var pills = $('.lookup-keys-container:visible .smart-var-tabs li:visible');

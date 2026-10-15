@@ -49,6 +49,22 @@ class LookupKeysControllerTest < ActionController::TestCase
     assert_equal 4, value.value
   end
 
+  test '#update passes more than 4096 overrides from JSON' do
+    lookup_values = (0...4097).to_h do |index|
+      [index.to_s, new_value_params.merge('match' => "hostgroup=group#{index}")]
+    end
+    params = { :override => true, :lookup_values_json => lookup_values.to_json }
+    DummyLookupKey.any_instance.expects(:update).with do |attributes|
+      assert_equal 4097, attributes[:lookup_values_attributes].size
+      assert_equal new_value_params.merge('match' => 'hostgroup=group0'), attributes[:lookup_values_attributes]['0']
+      true
+    end.returns(true)
+
+    patch :update, params: { :id => key.to_param, :dummy_lookup_key => params }, session: set_session_user
+
+    assert_redirected_to dummy_lookup_keys_path
+  end
+
   test '#update deletes values' do
     params = { :override => true, :lookup_values_attributes => { '0' => destroy_params }}
     assert_difference -> { key_with_value.override_values.count }, -1 do
@@ -68,9 +84,8 @@ class LookupKeysControllerTest < ActionController::TestCase
   end
 
   test '#update handle match conflict' do
-    params = { :override => true, :lookup_values_attributes => { '112' => new_value_params,
-                                                                 '113' => new_value_params,
-                                                                 '0' => destroy_params }}
+    lookup_values = { '112' => new_value_params, '113' => new_value_params, '0' => destroy_params }
+    params = { :override => true, :lookup_values_json => lookup_values.to_json }
     patch :update, params: { :id => key_with_value.to_param, :dummy_lookup_key => params }, session: set_session_user
     assert_response :success
     assert_equal 1, key_with_value.reload.override_values.count
